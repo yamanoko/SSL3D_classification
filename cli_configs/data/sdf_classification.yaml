@@ -1,0 +1,46 @@
+# @package _global_
+data:
+  module:
+    _target_: datasets.sdf_classification.SDFClassificationDataModule
+    name: sdf_classification
+    data_root_dir: ${data_dir}
+    batch_size: 4
+    train_transforms:
+      _target_: augmentation.policies.batchgenerators.get_training_transforms
+      patch_size: ${data.patch_size}
+      rotation_for_DA: 0.523599
+      mirror_axes: [0,1,2]
+      do_dummy_2d_data_aug: False
+    test_transforms: null
+  cv:
+    k: 5
+
+  # FDSLxSDF4Seg で生成したクラス数に合わせて変更してください
+  # 例: 4プリミティブ × 1マッパー = 4クラス
+  num_classes: 4
+  patch_size: [96, 96, 96]
+
+model:
+  task: 'Classification'
+  cifar_size: False
+  input_channels: 1
+  input_dim: 3
+  input_shape: ${data.patch_size}
+  optimizer: AdamW
+  lr: 0.0001
+  warmstart: 20
+  weight_decay: 1e-2
+  label_smoothing: 0.2
+
+trainer:
+  logger:
+    project: sdf_classification
+  accumulate_grad_batches: 16
+  max_epochs: 200
+  sync_batchnorm: True
+  enable_checkpointing: True
+
+metrics:
+  - 'acc'
+  - 'f1'
+  - 'balanced_acc'
