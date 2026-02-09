@@ -237,11 +237,9 @@ def preprocess_mrnet(
         print(f"  → {len(processed)} volumes processed")
 
     # ------------------------------------------------------------------
-    # 4.  Generate cross-validation splits and save splits_final.json
-    #     Only training cases are used for the CV split; validation cases
-    #     from the original dataset can optionally be included.
+    # 4.  Use original train/valid splits from raw data
     # ------------------------------------------------------------------
-    print("[4/4] Generating cross-validation splits …")
+    print("[4/4] Using original train/valid splits from raw data …")
 
     # Separate train and valid case ids
     train_ids = sorted([
@@ -251,16 +249,18 @@ def preprocess_mrnet(
         npy.stem for npy in (raw_dir / "valid" / view).glob("*.npy")
     ])
 
-    # Use ALL cases (train + valid) for cross-validation splits, so that
-    # every case appears in some fold.  Alternatively, only train_ids can
-    # be used if the original valid set should stay untouched.
-    all_ids = train_ids + valid_ids
-    splits = generate_crossval_split(all_ids, n_splits=n_splits)
+    # Create a single split using the original train/valid division
+    splits = [
+        {
+            "train": train_ids,
+            "val": valid_ids
+        }
+    ]
 
     splits_path = out_dir / "splits_final.json"
     with open(splits_path, "w") as f:
         json.dump(splits, f, indent=2)
-    print(f"  → Saved {n_splits} folds ({len(all_ids)} cases) to {splits_path}")
+    print(f"  → Saved original split (train: {len(train_ids)}, val: {len(valid_ids)}) to {splits_path}")
 
     print()
     print("=== Preprocessing complete ===")
